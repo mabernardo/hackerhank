@@ -3,24 +3,7 @@
  */
 #include <iostream>
 #include <vector>
-
-void insertion_sort(vector<int>& v)
-{
-    for (int& n : v)
-    {
-        for (vector<int>::iterator it = v.begin(); it != v.end(); ++it)
-        {
-            int& next = (it + 1);
-            if (*next > n)
-            {
-                *it = *next;
-                *next = n;
-            }
-        }
-        print_vector(v);
-    }
-
-}
+using namespace std;
 
 void print_vector(const vector<int>& v)
 {
@@ -31,12 +14,29 @@ void print_vector(const vector<int>& v)
     cout << endl;
 }
 
+void insertion_sort(vector<int>& v)
+{
+    for (int i = 1; i < v.size(); ++i)
+    {
+        int j = i;
+        while (j > 0 && v[j - 1] > v[j])
+        {
+            int t = v[j - 1];
+            v[j - 1] = v[j];
+            v[j] = t;
+            j--;
+        }
+        print_vector(v);
+    }
+
+}
+
 int main()
 {
     int size, item;
 
-    cin > size;
-    vector<int> v(size);
+    cin >> size;
+    vector<int> v;
 
     while (size--)
     {
