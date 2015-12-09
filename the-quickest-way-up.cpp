@@ -5,15 +5,21 @@
 #include <vector>
 using namespace std;
 
+
 #ifdef DEBUG
-    #define LOG( x ) x
+    #define LOG( x ) cout << x
+    #define LOG_LEVEL( x ) cout << std::string(level * 2, '.') << x
 #else
     #define LOG( x )
+    #define LOG_LEVEL( x )
 #endif
 
 const int BOARD_SIZE = 100;
 const int DICE_MIN = 1;
 const int DICE_MAX = 6;
+
+int level = -1;
+int count = 0;
 
 struct Path {
     int start;
@@ -45,7 +51,7 @@ int move(int start, int end, const vector<Path>& paths)
     int dice, dice_value;
     int distance;
 
-    LOG( cout << "  moving from " << pos << " to " << end << " [" );
+    LOG_LEVEL( "moving from " << pos << " to " << end << " [" );
     while (pos < end)
     {
         distance = end - pos;
@@ -54,7 +60,7 @@ int move(int start, int end, const vector<Path>& paths)
         {
             if (!hasPath(paths, pos + dice, end))
             {
-                LOG ( cout << " +" << dice << " " );
+                LOG ( " +" << dice << " " );
                 pos += dice;
                 break;
             }
@@ -66,10 +72,21 @@ int move(int start, int end, const vector<Path>& paths)
         }
         ++moves;
     }
-    LOG( cout << "]  moved " << moves << endl );
+    LOG( "]  moved " << moves << endl );
     return moves;
 }
-int level = 0;
+
+bool hasPassed(const Path& path, const vector<Path>& paths)
+{
+    for (const Path& pd : paths)
+    {
+        if (path.start == pd.start && path.end == pd.end)
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 int quickest_way(const vector<Path>& paths, const vector<Path>& passed, int start)
 {
@@ -77,52 +94,39 @@ int quickest_way(const vector<Path>& paths, const vector<Path>& passed, int star
     int shortest = BOARD_SIZE;
     int m, moves = 0;
     int total_moves = 0;
-    bool deadend;
     vector<Path> track = passed;
 
     ++level;
+    ++count;
 
-    LOG( cout << "{" << level << "} moving from " << start << endl );
     for (const Path& p : paths)
     {
-        if (start < p.start)
+        if (start > p.start || hasPassed(p, track))
+            continue;
+
+        moves = 0;
+        m = move(start, p.start, paths);
+        if (m == -1 || m > shortest)
+            continue;
+        moves += m;
+
+        LOG_LEVEL("entering path (" << p.start << ", " << p.end << ")" << endl);
+        track.push_back(p);
+        m = quickest_way(paths, track, p.end);
+        if (m > -1)
         {
-            deadend = false;
-            moves = 0;
-            for (const Path& pd : passed)
-            {
-                if (p.start == pd.start && p.end == pd.end)
-                {
-                    deadend = true;
-                    break;
-                }
-            }
-            if (deadend)
-                continue;
-
-            LOG( cout << "{" << level << "} entering path (" << p.start << ", "
-                << p.end << ")" << endl );
-            m = move(start, p.start, paths);
-            if (m == -1)
-                continue;
             moves += m;
-
-            track.push_back(p);
-            m = quickest_way(paths, track, p.end);
-            if (m > -1)
+            LOG_LEVEL("moves = " << moves << endl );
+            if (moves < shortest)
             {
-                moves += m;
-                LOG( cout << "{" << level << "} moves = " << moves << ", shortest = " << shortest << endl );
-                if (moves < shortest)
-                {
-                    shortest = moves; // + moves_to_path;
-                    LOG( cout << "{" << level << "} shortest = " << shortest << endl);
-                    pos = p.end;
-                }
+                shortest = moves; // + moves_to_path;
+                pos = p.end;
+                LOG_LEVEL("shortest = " << shortest << endl);
             }
+            else
+                break;
         }
     }
-
     m = move(start, BOARD_SIZE, paths);
     if (m > 0 && m < shortest)
         shortest = m;
@@ -135,8 +139,7 @@ int quickest_way(const vector<Path>& paths, const vector<Path>& passed, int star
         total_moves = moves > -1 ? total_moves + moves : -1;
     }
 
-    LOG( cout << "{" << level << "} total_moves = " << total_moves << endl );
-    LOG( print_path(track) );
+    LOG_LEVEL("best = " << total_moves << endl );
 
     --level;
     return total_moves;
@@ -174,6 +177,7 @@ int main()
         #endif
 
         cout << quickest_way(paths, track, 1) << endl;
+        LOG("calculations: " << count << endl);
     }
     return 0;
 }
