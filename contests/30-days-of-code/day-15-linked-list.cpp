@@ -18,12 +18,7 @@ public:
     ~Node()
     {
         if (next != NULL)
-        {
-            cout << "Deleting " << next->data << endl;
             delete next;
-        }
-        //cout << "Deleting " << this->data << endl;
-        //delete this;
     }
 };
 
@@ -63,7 +58,6 @@ public:
     }
     ~Solution()
     {
-        cout << "Deleting " << head->data << endl;
         delete head;
     }
 
